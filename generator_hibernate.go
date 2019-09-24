@@ -453,7 +453,8 @@ func (gen *Hibernate) convertType(col Column) string {
 		return "JsonObject"
 	case "timestamp":
 		return "Timestamp"
-	case "timestamp with time zone", "timestamp without time zone":
+	// FIXME: regex...
+	case "timestamp with time zone", "timestamp without time zone", "timestamp(3) with time zone":
 		return "OffsetDateTime"
 	case "boolean":
 		return "boolean"
