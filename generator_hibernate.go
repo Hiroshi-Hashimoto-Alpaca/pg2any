@@ -156,6 +156,7 @@ func (gen *Hibernate) buildTable(wr io.Writer, table Table) error {
 		"name":         SnakeToUpperCamel(table.Name),
 		"member":       gen.members(table),
 		"accessor":     gen.accessor(table),
+		"additional":   gen.additional(table),
 	})
 }
 
@@ -363,6 +364,43 @@ func (gen *Hibernate) setter(col Column) (string, error) {
 	}
 
 	return ret.String(), nil
+}
+
+func (gen *Hibernate) additional(table Table) string {
+	var ret bytes.Buffer
+
+	var hasCreateDatetime = false
+	for _, col := range table.Columns {
+		if col.Name == "create_datetime" {
+			hasCreateDatetime = true
+			break
+		}
+	}
+	var hasUpdateDatetime = false
+	for _, col := range table.Columns {
+		if col.Name == "update_datetime" {
+			hasUpdateDatetime = true
+			break
+		}
+	}
+
+	if gen.config.VersionFieldColumn == "update_datetime" {
+		// org.hibernate.engine.internal.Versioning による払い出しを行うため Entity クラスのアノテーションによるCallbackメソッドでの update_datetime への現在時刻指定は行わせない
+		hasUpdateDatetime = false
+	}
+
+	data := map[string]interface{}{
+		"hasCreateDatetime": hasCreateDatetime,
+		"hasUpdateDatetime": hasUpdateDatetime,
+	}
+	// FIXME: 複数の戻り値の指定の1つをいい感じに取り出す記法がわからなかったのでとりあえず error を握りつぶす良くない実装に逃げてシグネチャを変えた
+	//if err := gen.template.ExecuteTemplate(&ret, "additional", data); err != nil {
+	//	return "", errors.Wrap(err, "additional: "+table.Name)
+	//}
+
+	gen.template.ExecuteTemplate(&ret, "additional", data)
+
+	return ret.String()
 }
 
 func (gen *Hibernate) buildType(wr, utwr io.Writer, typ Type) error {

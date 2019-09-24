@@ -1,0 +1,18 @@
+{{- define "additional" -}}
+  {{if .hasCreateDatetime }}
+  @javax.persistence.PrePersist
+  private void onPrePersist() {
+    final OffsetDateTime now = OffsetDateTime.now();
+    this.setCreateDatetime(now.withNano((int) (now.getNano() / 1000000) * 1000000));
+    {{if .hasUpdateDatetime }}  this.setUpdateDatetime(now.withNano((int) (now.getNano() / 1000000) * 1000000));
+    {{end}}
+  }
+  {{end}}
+  {{if .hasUpdateDatetime }}
+  @javax.persistence.PreUpdate
+  private void onPreUpdate() {
+    final OffsetDateTime now = OffsetDateTime.now();
+    this.setUpdateDatetime(now.withNano((int) (now.getNano() / 1000000) * 1000000));
+  }
+  {{end}}
+{{ end }}
